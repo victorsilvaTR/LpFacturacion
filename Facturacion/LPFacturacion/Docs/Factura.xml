@@ -1,0 +1,58 @@
+<DTE version="1.0">
+  <Documento ID="F54T33">
+    <Encabezado>
+      <IdDoc>
+        <TipoDTE>33</TipoDTE>
+        <Folio>54</Folio>
+        <FchEmis>2016-06-16</FchEmis>
+      </IdDoc>
+      <Emisor>
+        <RUTEmisor>79799800-1</RUTEmisor>
+        <RznSoc>HORMIGONES ARMADOS LTDA.</RznSoc>
+        <GiroEmis>Construccion</GiroEmis>
+        <Acteco>269400</Acteco>
+        <DirOrigen>Sargento Aldea 914  </DirOrigen>
+        <CmnaOrigen>Pudahuel</CmnaOrigen>
+        <CiudadOrigen>Santiago</CiudadOrigen>
+      </Emisor>
+      <Receptor>
+        <RUTRecep>60803000-K</RUTRecep>
+        <RznSocRecep>JORGE GONZALEZ LTDA</RznSocRecep>
+        <GiroRecep>FERRETERIA</GiroRecep>
+        <DirRecep>PARCELA SANTA EMILIA EL MARCO</DirRecep>
+        <CmnaRecep>MELIPILLA</CmnaRecep>
+        <CiudadRecep>MELIPILLA</CiudadRecep>
+      </Receptor>
+      <Totales>
+        <MntNeto>1295034</MntNeto>
+        <MntExe>0</MntExe>
+        <TasaIVA>19</TasaIVA>
+        <IVA>246056</IVA>
+        <MntTotal>1541090</MntTotal>
+      </Totales>
+    </Encabezado>
+    <Detalle>
+      <NroLinDet>1</NroLinDet>
+      <CdgItem>
+        <TpoCodigo>EJ</TpoCodigo>
+        <VlrCodigo>0000001</VlrCodigo>
+      </CdgItem>
+      <NmbItem>Cajón AFECTO</NmbItem>
+      <QtyItem>181</QtyItem>
+      <PrcItem>4206</PrcItem>
+      <MontoItem>761286</MontoItem>
+    </Detalle>
+    <Detalle>
+      <NroLinDet>2</NroLinDet>
+      <CdgItem>
+        <TpoCodigo>EJ</TpoCodigo>
+        <VlrCodigo>00000002</VlrCodigo>
+      </CdgItem>
+      <NmbItem>Relleno AFECTO</NmbItem>
+      <QtyItem>76</QtyItem>
+      <PrcItem>7023</PrcItem>
+      <MontoItem>533748</MontoItem>
+    </Detalle>
+    <TmstFirma>0</TmstFirma>
+  </Documento>
+</DTE>
