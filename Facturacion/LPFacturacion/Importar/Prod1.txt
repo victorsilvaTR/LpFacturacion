@@ -1,0 +1,5 @@
+Tipo Cód.	Código	Producto	U.Medida	Precio	EsProducto	Observaciones
+02	AI-452	Equipo de Aire Acondicionado 2	Ud	320000.00	SI	Ecológico y eficiente 2
+01	CA-125	Equipo de Calefacción 2	Ud	150000.00	NO	Equipo de calefacción eléctrico 2
+04	EP-4501	Estufa a pellets 2	UD	500000.00	SI	No contaminante 2
+03	JI-901	Pellets 2	Kg	1250.66	NO	Bolsas de 5 kilos 2

@@ -1,0 +1,18 @@
+Rut	Codigo	Nombre	Direccion	COMUNA	Ciudad	Telefonos	Fax	CodActEcon	Domicilio Postal	Comuna Postal	Email	Web	Obs	Cliente	Proveedor	Empleado	Socio	Distrib	Otro
+999999-9	INTERRA	Interra Propiedades	La Pastora 180	Las Condes		222 3168		giro 1		0				1	0	0	0	0	0
+888888-8	MICROSOFT	Microsoft Corp.	Sanchez Fontecilla 123			330 6000		giro 2		0				0	1	0	0	0	0
+10.734.140-4	PAOLA	Paola Sáez						11122		0				1	0	0	0	0	0
+77.049.060-K	FAIRWARE	Fairware Ltda.								0				1	0	0	0	0	0
+3-5	OPPICI	Oppici S.A.								0				0	1	1	1	1	1
+4-3	VALUE	VALUE S.A.								0				1	0	0	0	0	0
+8.778.295-6	ASTERIX	ASTERIX S.A.		Providencia						-1				1	0	0	0	0	0
+5-1	ABC	ABC S.A.								-1				1	0	0	0	0	0
+6-k	SINOPSIS	SINOPSIS S.A.						11151		-1				0	1	0	0	0	0
+7-8	ABARCA	Abarca Hnos.								-1				1	0	0	0	0	0
+9-4	ITURRA	Iturra Hnos.								-1				1	0	0	0	0	0
+84.358.900-6	JUMBO	Jumbo S.A.								-1				1	0	0	0	0	0
+8778293-k	PPEREZ	Pedro Perez						555555		0				1	0	0	0	0	0
+3871283-7	ACASTRO	Alejandra Castro								-1				0	1	0	0	0	0
+3553939-5	FDELGADO	Fernando Delgado								-1				1	0	0	0	0	0
+6666-6	PRUEBA1	Prueba 1
+7777-7	PRUEBA2	Prueba 2
