@@ -1,7 +1,7 @@
-FrmMain = 78, 78, 1343, 607, Z, 52, 52, 1317, 581, C
+FrmMain = 78, 78, 1343, 607, C, 52, 52, 1317, 581, C
 PAM = 0, 0, 0, 0, C
 SDK50 = 0, 0, 0, 0, C
 FAIRDLL32 = 0, 0, 0, 0, C
-PamFGrid = 26, 26, 1291, 555, 
+PamFGrid = 26, 26, 1291, 555, C
 Calendar = 0, 0, 0, 0, C
 ModNetCode = 0, 0, 0, 0, C
