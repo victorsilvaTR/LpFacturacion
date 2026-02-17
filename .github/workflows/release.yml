@@ -26,6 +26,31 @@ jobs:
           echo version=%VER%>> %GITHUB_OUTPUT%
           echo Releasing version %VER%
 
+      - name: Delete existing release
+        shell: powershell
+        run: |
+          $tag = "v${{ steps.version.outputs.version }}"
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+          }
+          $api = "https://api.github.com/repos/${{ github.repository }}"
+          try {
+              $release = Invoke-RestMethod "$api/releases/tags/$tag" -Headers $headers
+              Write-Host "Deleting existing release $tag (id: $($release.id))"
+              Invoke-RestMethod "$api/releases/$($release.id)" -Method Delete -Headers $headers
+          } catch {
+              Write-Host "No existing release for $tag"
+          }
+          try {
+              Invoke-RestMethod "$api/git/refs/tags/$tag" -Method Delete -Headers $headers
+              Write-Host "Deleted tag $tag"
+          } catch {
+              Write-Host "No existing tag $tag"
+          }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Generate release notes
         id: notes
         shell: powershell
