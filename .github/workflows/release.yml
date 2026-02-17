@@ -79,6 +79,7 @@ jobs:
       - name: Download CI artifacts
         shell: powershell
         run: |
+          $ErrorActionPreference = 'Stop'
           $headers = @{
             Authorization = "Bearer $env:GITHUB_TOKEN"
             Accept = "application/vnd.github+json"
@@ -90,16 +91,22 @@ jobs:
           Write-Host "Downloading artifacts from CI run $runId"
 
           $artifacts = Invoke-RestMethod "$api/actions/runs/$runId/artifacts" -Headers $headers
+          Write-Host "Found $($artifacts.total_count) artifacts"
+
+          if (Test-Path "C:\lpfacturacion-release\executables") { Remove-Item "C:\lpfacturacion-release\executables" -Recurse -Force }
+          if (Test-Path "C:\lpfacturacion-release\installer") { Remove-Item "C:\lpfacturacion-release\installer" -Recurse -Force }
 
           foreach ($art in $artifacts.artifacts) {
               $name = $art.name
               $zip = "C:\lpfacturacion-release\$name.zip"
               $dest = if ($name -match 'executables') { "C:\lpfacturacion-release\executables" } else { "C:\lpfacturacion-release\installer" }
               if (-not (Test-Path $dest)) { mkdir $dest | Out-Null }
-              Write-Host "Downloading $name..."
+              Write-Host "Downloading $name to $dest..."
               Invoke-WebRequest $art.archive_download_url -Headers $headers -OutFile $zip
               Expand-Archive $zip -DestinationPath $dest -Force
               Remove-Item $zip
+              Write-Host "Contents of ${dest}:"
+              Get-ChildItem $dest -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
           }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -109,6 +116,7 @@ jobs:
         run: |
           set "PATH=%PATH%;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64"
           echo Signing installer with PROD certificate
+          dir "C:\lpfacturacion-release\installer\"
           "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" sign --fingerprint "cc0d3223e84e51026e54deb40b97c50d1d5e7e43" --input "C:\lpfacturacion-release\installer"
 
       - name: Create GitHub Release
