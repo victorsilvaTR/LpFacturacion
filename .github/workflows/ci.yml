@@ -1,0 +1,113 @@
+name: CI
+
+on:
+  push:
+    branches: [ master, main ]
+    paths:
+      - '**.vbp'
+      - '**.frm'
+      - '**.bas'
+      - '**.cls'
+      - '**.ctl'
+      - 'installer/**'
+      - '.github/workflows/ci.yml'
+      - 'VERSION'
+  pull_request:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build
+    runs-on: self-hosted
+
+    env:
+      VB6: 'C:\Program Files (x86)\Microsoft Visual Studio\VB98\VB6.EXE'
+      ISCC: 'C:\Program Files (x86)\Inno Setup 6\ISCC.exe'
+      BUILD_DIR: 'C:\lpfacturacion-build'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Prepare build directory
+        shell: cmd
+        run: |
+          if exist "%BUILD_DIR%\LpFacturacion" rd /s /q "%BUILD_DIR%\LpFacturacion" 2>nul && timeout /t 2 /nobreak >nul
+          robocopy "%GITHUB_WORKSPACE%" "%BUILD_DIR%\LpFacturacion" /E /NFL /NDL /NJH /NJS /NC /NS /XD .git
+          if %ERRORLEVEL% GEQ 8 exit /b 1
+          exit /b 0
+
+      - name: Read version
+        id: version
+        shell: cmd
+        run: |
+          set /p VER=<"%BUILD_DIR%\LpFacturacion\VERSION"
+          echo version=%VER%>> %GITHUB_OUTPUT%
+          echo Building version %VER%
+
+      - name: Stamp version into installer script
+        shell: powershell
+        run: |
+          $ver = "${{ steps.version.outputs.version }}"
+          $buildDir = $env:BUILD_DIR
+
+          Write-Host "Stamping version $ver into installer.iss"
+
+          $issPath = "$buildDir\LpFacturacion\installer\installer.iss"
+          $c = Get-Content $issPath -Raw
+          $c = $c -replace '(?<=#define MyAppVersion ")[\d.]+', $ver
+          $c = $c -replace '(?<=#define MyExeSetup "TRFactura_)[\d._]+', $ver
+          Set-Content $issPath $c -NoNewline
+
+      - name: Build VB6 projects
+        shell: cmd
+        run: |
+          echo Building VB6 projects
+          "%VB6%" /make "%BUILD_DIR%\LpFacturacion\Facturacion\NetCode\Project1.vbp" /outdir "%BUILD_DIR%\LpFacturacion\installer\Archivos"
+          if errorlevel 1 exit /b 1
+          "%VB6%" /make "%BUILD_DIR%\LpFacturacion\Facturacion\LPFacturacion\LPFacturacion.vbp" /outdir "%BUILD_DIR%\LpFacturacion\installer\Archivos"
+          if errorlevel 1 exit /b 1
+
+      # Steps below only run on push to main or manual dispatch (skipped on PRs)
+
+      - name: Build Installer
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: cmd
+        run: |
+          "%ISCC%" "%BUILD_DIR%\LpFacturacion\installer\installer.iss"
+          if errorlevel 1 exit /b 1
+
+      - name: Prepare distribution
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: cmd
+        run: |
+          set "VER=${{ steps.version.outputs.version }}"
+          if not exist "%BUILD_DIR%\LpFacturacion\Distribucion" mkdir "%BUILD_DIR%\LpFacturacion\Distribucion"
+          copy /Y "%BUILD_DIR%\LpFacturacion\installer\TRFactura_%VER%.exe" "%BUILD_DIR%\LpFacturacion\Distribucion\"
+
+      - name: Sign installer (DEV)
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        shell: cmd
+        run: |
+          set "PATH=%PATH%;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64"
+          echo Signing installer with DEV certificate
+          "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" sign --keypair-alias TRDevDynamic --input "%BUILD_DIR%\LpFacturacion\Distribucion"
+
+      - name: Upload Executables
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: executables-v${{ steps.version.outputs.version }}
+          path: |
+            C:\lpfacturacion-build\LpFacturacion\installer\Archivos\TRFacturacion.exe
+            C:\lpfacturacion-build\LpFacturacion\installer\Archivos\NetCodePrueba1.exe
+          retention-days: 90
+
+      - name: Upload Installer
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: installer-v${{ steps.version.outputs.version }}
+          path: C:\lpfacturacion-build\LpFacturacion\installer\TRFactura*.exe
+          retention-days: 90

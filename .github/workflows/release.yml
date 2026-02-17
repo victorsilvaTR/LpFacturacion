@@ -1,0 +1,127 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  release:
+    name: Release
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Read version from source
+        id: version
+        shell: cmd
+        run: |
+          set /p VER=<VERSION
+          echo version=%VER%>> %GITHUB_OUTPUT%
+          echo Releasing version %VER%
+
+      - name: Generate release notes
+        id: notes
+        shell: powershell
+        run: |
+          $ver = "${{ steps.version.outputs.version }}"
+
+          $ErrorActionPreference = 'SilentlyContinue'
+          $lastTag = git describe --tags --abbrev=0 2>&1 | Where-Object { $_ -notmatch 'fatal:' }
+          $ErrorActionPreference = 'Stop'
+          if ($lastTag) {
+              $commits = git log "$lastTag..HEAD" --pretty=format:"%s" --no-merges
+          } else {
+              $commits = git log --pretty=format:"%s" --no-merges -50
+          }
+
+          $feats = @()
+          $fixes = @()
+          $others = @()
+
+          foreach ($msg in $commits) {
+              if ($msg -match '^feat[:\(]') { $feats += "- $msg" }
+              elseif ($msg -match '^fix[:\(]') { $fixes += "- $msg" }
+              elseif ($msg -match '^(docs|refactor|chore|style|test|perf|build|ci)[:\(]') { $others += "- $msg" }
+              else { $others += "- $msg" }
+          }
+
+          $body = "## TR Facturacion $ver`n`n"
+
+          if ($feats.Count -gt 0) {
+              $body += "### New Features`n$($feats -join "`n")`n`n"
+          }
+          if ($fixes.Count -gt 0) {
+              $body += "### Bug Fixes`n$($fixes -join "`n")`n`n"
+          }
+          if ($others.Count -gt 0) {
+              $body += "### Other Changes`n$($others -join "`n")`n`n"
+          }
+
+          $body += "### Artifacts`n"
+          $body += "- **TRFactura_$ver.exe** - Installer`n"
+          $body += "- **TRFacturacion.exe** - Main application`n"
+          $body += "- **NetCodePrueba1.exe** - Network codes utility`n`n"
+          $body += "### Digital Signature`n"
+          $body += "All artifacts are signed with DigiCert **production** certificate."
+
+          $bodyFile = "C:\lpfacturacion-release\release-notes.md"
+          if (-not (Test-Path "C:\lpfacturacion-release")) { mkdir "C:\lpfacturacion-release" | Out-Null }
+          Set-Content $bodyFile $body -NoNewline
+          echo "notes_file=$bodyFile" >> $env:GITHUB_OUTPUT
+
+      - name: Download CI artifacts
+        shell: powershell
+        run: |
+          $headers = @{
+            Authorization = "Bearer $env:GITHUB_TOKEN"
+            Accept = "application/vnd.github+json"
+          }
+          $api = "https://api.github.com/repos/${{ github.repository }}"
+
+          $runs = Invoke-RestMethod "$api/actions/workflows/ci.yml/runs?status=success&per_page=1" -Headers $headers
+          $runId = $runs.workflow_runs[0].id
+          Write-Host "Downloading artifacts from CI run $runId"
+
+          $artifacts = Invoke-RestMethod "$api/actions/runs/$runId/artifacts" -Headers $headers
+
+          foreach ($art in $artifacts.artifacts) {
+              $name = $art.name
+              $zip = "C:\lpfacturacion-release\$name.zip"
+              $dest = if ($name -match 'executables') { "C:\lpfacturacion-release\executables" } else { "C:\lpfacturacion-release\installer" }
+              if (-not (Test-Path $dest)) { mkdir $dest | Out-Null }
+              Write-Host "Downloading $name..."
+              Invoke-WebRequest $art.archive_download_url -Headers $headers -OutFile $zip
+              Expand-Archive $zip -DestinationPath $dest -Force
+              Remove-Item $zip
+          }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Sign installer (PROD)
+        shell: cmd
+        run: |
+          set "PATH=%PATH%;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64"
+          echo Signing installer with PROD certificate
+          "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" sign --fingerprint "cc0d3223e84e51026e54deb40b97c50d1d5e7e43" --input "C:\lpfacturacion-release\installer"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: TR Facturacion ${{ steps.version.outputs.version }}
+          body_path: ${{ steps.notes.outputs.notes_file }}
+          files: |
+            C:\lpfacturacion-release\installer\*.exe
+            C:\lpfacturacion-release\executables\TRFacturacion.exe
+            C:\lpfacturacion-release\executables\NetCodePrueba1.exe
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
