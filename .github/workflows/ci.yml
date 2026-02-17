@@ -94,20 +94,10 @@ jobs:
           echo Signing installer with DEV certificate
           "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" sign --keypair-alias TRDevDynamic --input "%BUILD_DIR%\LpFacturacion\Distribucion"
 
-      - name: Upload Executables
-        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
-        uses: actions/upload-artifact@v4
-        with:
-          name: executables-v${{ steps.version.outputs.version }}
-          path: |
-            C:\lpfacturacion-build\LpFacturacion\installer\Archivos\TRFacturacion.exe
-            C:\lpfacturacion-build\LpFacturacion\installer\Archivos\NetCodePrueba1.exe
-          retention-days: 90
-
       - name: Upload Installer
         if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
         uses: actions/upload-artifact@v4
         with:
           name: installer-v${{ steps.version.outputs.version }}
-          path: C:\lpfacturacion-build\LpFacturacion\installer\TRFactura*.exe
+          path: C:\lpfacturacion-build\LpFacturacion\Distribucion\TRFactura_${{ steps.version.outputs.version }}.exe
           retention-days: 90

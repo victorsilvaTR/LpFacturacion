@@ -65,9 +65,7 @@ jobs:
           }
 
           $body += "### Artifacts`n"
-          $body += "- **TRFactura_$ver.exe** - Installer`n"
-          $body += "- **TRFacturacion.exe** - Main application`n"
-          $body += "- **NetCodePrueba1.exe** - Network codes utility`n`n"
+          $body += "- **TRFactura_$ver.exe** - Installer (includes TRFacturacion.exe + libraries + databases)`n`n"
           $body += "### Digital Signature`n"
           $body += "All artifacts are signed with DigiCert **production** certificate."
 
@@ -91,22 +89,18 @@ jobs:
           Write-Host "Downloading artifacts from CI run $runId"
 
           $artifacts = Invoke-RestMethod "$api/actions/runs/$runId/artifacts" -Headers $headers
-          Write-Host "Found $($artifacts.total_count) artifacts"
 
-          if (Test-Path "C:\lpfacturacion-release\executables") { Remove-Item "C:\lpfacturacion-release\executables" -Recurse -Force }
           if (Test-Path "C:\lpfacturacion-release\installer") { Remove-Item "C:\lpfacturacion-release\installer" -Recurse -Force }
 
           foreach ($art in $artifacts.artifacts) {
               $name = $art.name
               $zip = "C:\lpfacturacion-release\$name.zip"
-              $dest = if ($name -match 'executables') { "C:\lpfacturacion-release\executables" } else { "C:\lpfacturacion-release\installer" }
+              $dest = "C:\lpfacturacion-release\installer"
               if (-not (Test-Path $dest)) { mkdir $dest | Out-Null }
-              Write-Host "Downloading $name to $dest..."
+              Write-Host "Downloading $name..."
               Invoke-WebRequest $art.archive_download_url -Headers $headers -OutFile $zip
               Expand-Archive $zip -DestinationPath $dest -Force
               Remove-Item $zip
-              Write-Host "Contents of ${dest}:"
-              Get-ChildItem $dest -Recurse | ForEach-Object { Write-Host "  $($_.FullName)" }
           }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -116,7 +110,6 @@ jobs:
         run: |
           set "PATH=%PATH%;C:\Program Files (x86)\Windows Kits\10\bin\10.0.26100.0\x64"
           echo Signing installer with PROD certificate
-          dir "C:\lpfacturacion-release\installer\"
           "C:\Program Files\DigiCert\DigiCert One Signing Manager Tools\smctl.exe" sign --fingerprint "cc0d3223e84e51026e54deb40b97c50d1d5e7e43" --input "C:\lpfacturacion-release\installer"
 
       - name: Create GitHub Release
@@ -127,8 +120,6 @@ jobs:
           body_path: ${{ steps.notes.outputs.notes_file }}
           files: |
             C:\lpfacturacion-release\installer\TRFactura_${{ steps.version.outputs.version }}.exe
-            C:\lpfacturacion-release\executables\TRFacturacion.exe
-            C:\lpfacturacion-release\executables\NetCodePrueba1.exe
           draft: false
           prerelease: false
         env:
